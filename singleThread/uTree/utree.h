@@ -67,18 +67,20 @@ PMEMobjpool *pop;
 void *alloc(size_t size);
 
 inline void DEBUG_KEY(int64_t key, std::string func){
-    printf("[%s]: ", func.c_str());
+    /*printf("[%s]: ", func.c_str());
     size_t* s = (size_t*)key;
     char* raw_key = (char*)key + sizeof(size_t);
     for (size_t i = 0; i < *s; ++i) {
         printf("%d ", raw_key[i]);
     }
-    printf("\n");
+    printf("\n");*/
 }
 
 inline int is_key_equal(int64_t left, int64_t right) {
     //DEBUG_KEY(left, "equal");
     //DEBUG_KEY(right, "equal");
+    if (right == 0) return -1;
+    if (left == 0) return 1;
     char* left_key = (char*)left + sizeof(size_t);
     char* right_key = (char*)right + sizeof(size_t);
     size_t *s_left = (size_t*)left;
@@ -182,7 +184,7 @@ class entry{
 
   public :
     entry(){
-      key = LONG_MAX;
+      key = 0;
       ptr = NULL;
     }
 

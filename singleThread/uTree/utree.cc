@@ -255,7 +255,6 @@ void btree::insert(entry_key_t key, char *right) {
                 goto retry;
         }
     }
-    printf("exit insert\n");
 }
 
 
