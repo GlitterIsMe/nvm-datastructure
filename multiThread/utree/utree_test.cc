@@ -50,8 +50,8 @@ int main() {
             search_miss++;
         }
         delete[] lookup_key;
-        printf("found [%d], not found [%d]\n", search_found, search_miss);
     }
+    printf("found [%d], not found [%d]\n", search_found, search_miss);
 
     //scan
     std::string raw_key = GenerateRandomKey(1);
