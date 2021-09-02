@@ -719,8 +719,10 @@ class page{
         } while(hdr.switch_counter != previous_switch_counter);
 
         if((t = (char *)hdr.sibling_ptr) != NULL) {
-          if(_key >= PtrKey(((page *)t)->records[0].key))
-            return t;
+            entry_key_t tmp_key = ((page *)t)->records[0].key;
+            if(_key >= PtrKey(tmp_key)) {
+                return t;
+            }
         }
 
         if(ret) {

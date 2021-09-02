@@ -6,6 +6,7 @@ pkg_check_modules(LIBPMEM REQUIRED libpmem)
 pkg_check_modules(LIBPMEMOBJ REQUIRED libpmemobj)
 
 option(USE_PMDK "use pmdk library" ON)
+option(BUILD_SHARED_LIBS "build shared libs" ON)
 if (USE_PMDK)
     add_definitions(-DUSE_PMDK)
 endif ()
@@ -15,6 +16,9 @@ target_sources(utree PUBLIC
         "multiThread/utree/utree.h"
         "multiThread/utree/utree.cc"
         "multiThread/utree/raw_key.h"
+        "multiThread/utree/log.h"
+        "multiThread/utree/global_log.cc"
+        "multiThread/utree/global_log.h"
         )
 target_include_directories(utree PUBLIC multiThread/utree ${LIBPMEM_INCLUDE_DIRS} ${LIBPMEMOBJ_INCLUDE_DIRS})
 target_link_libraries(utree ${LIBPMEM_LIBRARIES} ${LIBPMEMOBJ_LIBRARIES})

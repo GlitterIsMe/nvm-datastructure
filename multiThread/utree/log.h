@@ -10,9 +10,16 @@
 #include <cstdint>
 #include <string>
 #include <atomic>
+#include <cstring>
 
 namespace pm {
 
+    inline std::string GenerateRawEntry(std::string entry){
+        uint64_t size = entry.size();
+        std::string raw_size((char*)(&size), sizeof(uint64_t));
+        //return std::string("user").append(zeros, '0').append(key_num_str);
+        return raw_size + entry;
+    }
 
     using PmAddr = uint64_t;
     class LogStore {
@@ -22,6 +29,11 @@ namespace pm {
             if (raw_ == nullptr) {
                 fprintf(stderr, "map file failed [%s]\n", strerror(errno));
                 exit(-1);
+            }
+            if (is_pmem_) {
+                printf("is pmem\n");
+            } else {
+                printf("not pmem\n");
             }
             tail_ = 0;
         }

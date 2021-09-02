@@ -39,13 +39,13 @@ int file_exists(const char *filename) {
 
 void openPmemobjPool() {
     printf("use pmdk!\n");
-    char pathname[100] = "./pool";
+    char pathname[100] = "/mnt/pmem/utree_pool";
     int sds_write_value = 0;
     pmemobj_ctl_set(NULL, "sds.at_create", &sds_write_value);
     if (file_exists(pathname) != 0) {
         printf("create new one.\n");
         if ((pop = pmemobj_create(pathname, POBJ_LAYOUT_NAME(btree),
-                                  (uint64_t)1024 * 1024 * 1024, 0666)) ==
+                                  (uint64_t)40 * 1024 * 1024 * 1024, 0666)) ==
                                   NULL) {
             perror("failed to create pool.\n");
             return;
@@ -224,7 +224,7 @@ void btree::remove(entry_key_t key) {
     retry:
     cur = (list_node_t *)btree_search_pred(key, &f, (char **)&prev, debug);
     if (!f) {
-        printf("not found.\n");
+        //printf("not found.\n");
         return;
     }
     if (prev == NULL) {
