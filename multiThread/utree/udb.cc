@@ -9,8 +9,6 @@
 
 namespace utree {
 
-
-
     const int LEN_SIZE = 8;
 
     bool ShouldStop(const std::string& first_str, const std::string& str){
