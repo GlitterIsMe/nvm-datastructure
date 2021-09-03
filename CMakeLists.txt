@@ -19,6 +19,8 @@ target_sources(utree PUBLIC
         "multiThread/utree/log.h"
         "multiThread/utree/global_log.cc"
         "multiThread/utree/global_log.h"
+        "multiThread/utree/udb.cc"
+        "multiThread/utree/udb.h"
         )
 target_include_directories(utree PUBLIC multiThread/utree ${LIBPMEM_INCLUDE_DIRS} ${LIBPMEMOBJ_INCLUDE_DIRS})
 target_link_libraries(utree ${LIBPMEM_LIBRARIES} ${LIBPMEMOBJ_LIBRARIES})

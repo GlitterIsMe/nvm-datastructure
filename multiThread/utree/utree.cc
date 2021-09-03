@@ -3,61 +3,61 @@
 //
 #include <libpmemobj.h>
 #include "utree.h"
-
-pthread_mutex_t print_mtx;
+namespace utree {
+    pthread_mutex_t print_mtx;
 
 #ifdef USE_PMDK
-POBJ_LAYOUT_BEGIN(btree);
-POBJ_LAYOUT_TOID(btree, list_node_t);
-POBJ_LAYOUT_END(btree);
-PMEMobjpool *pop;
+    POBJ_LAYOUT_BEGIN(btree);
+    POBJ_LAYOUT_TOID(btree, list_node_t);
+    POBJ_LAYOUT_END(btree);
+    PMEMobjpool *pop;
 #endif
-void *alloc(size_t size) {
+    void *alloc(size_t size) {
 #ifdef USE_PMDK
-    TOID(list_node_t) p;
-    POBJ_ZALLOC(pop, &p, list_node_t, size);
-    return pmemobj_direct(p.oid);
+        TOID(list_node_t) p;
+        POBJ_ZALLOC(pop, &p, list_node_t, size);
+        return pmemobj_direct(p.oid);
 #else
-    void *ret = curr_addr;
-    memset(ret, 0, sizeof(list_node_t));
-    curr_addr += size;
-    if (curr_addr >= start_addr + SPACE_PER_THREAD) {
-        printf("start_addr is %p, curr_addr is %p, SPACE_PER_THREAD is %lu, no "
-               "free space to alloc\n",
-               start_addr, curr_addr, SPACE_PER_THREAD);
-        exit(0);
-    }
-    return ret;
+        void *ret = curr_addr;
+        memset(ret, 0, sizeof(list_node_t));
+        curr_addr += size;
+        if (curr_addr >= start_addr + SPACE_PER_THREAD) {
+            printf("start_addr is %p, curr_addr is %p, SPACE_PER_THREAD is %lu, no "
+                   "free space to alloc\n",
+                   start_addr, curr_addr, SPACE_PER_THREAD);
+            exit(0);
+        }
+        return ret;
 #endif
-}
+    }
 
 #ifdef USE_PMDK
 int file_exists(const char *filename) {
-    struct stat buffer;
-    return stat(filename, &buffer);
-}
+        struct stat buffer;
+        return stat(filename, &buffer);
+    }
 
-void openPmemobjPool() {
-    printf("use pmdk!\n");
-    char pathname[100] = "/mnt/pmem/utree_pool";
-    int sds_write_value = 0;
-    pmemobj_ctl_set(NULL, "sds.at_create", &sds_write_value);
-    if (file_exists(pathname) != 0) {
-        printf("create new one.\n");
-        if ((pop = pmemobj_create(pathname, POBJ_LAYOUT_NAME(btree),
-                                  (uint64_t)40 * 1024 * 1024 * 1024, 0666)) ==
-                                  NULL) {
-            perror("failed to create pool.\n");
-            return;
-        }
-    } else {
-        printf("open existing one.\n");
-        if ((pop = pmemobj_open(pathname, POBJ_LAYOUT_NAME(btree))) == NULL) {
-            perror("failed to open pool.\n");
-            return;
+    void openPmemobjPool() {
+        printf("use pmdk!\n");
+        char pathname[100] = "./utree_pool";
+        int sds_write_value = 0;
+        pmemobj_ctl_set(NULL, "sds.at_create", &sds_write_value);
+        if (file_exists(pathname) != 0) {
+            printf("create new one.\n");
+            if ((pop = pmemobj_create(pathname, POBJ_LAYOUT_NAME(btree),
+                                      (uint64_t)1024 * 1024 * 1024, 0666)) ==
+                                      NULL) {
+                perror("failed to create pool.\n");
+                return;
+            }
+        } else {
+            printf("open existing one.\n");
+            if ((pop = pmemobj_open(pathname, POBJ_LAYOUT_NAME(btree))) == NULL) {
+                perror("failed to open pool.\n");
+                return;
+            }
         }
     }
-}
 #endif
 
 /*
@@ -288,18 +288,37 @@ void btree::btree_delete(entry_key_t key) {
     }
 }
 
-void btree::scan(entry_key_t key, int num, uint64_t buf[]){
-    bool f = false;
-    char *prev;
-    char *ptr = btree_search_pred(key, &f, &prev);
-    register int i;
-    assert(f);
-    list_node_t *n = (list_node_t *)ptr;
+list_node_t* btree::scan(entry_key_t key){
+    PtrKey _key(key);
+    page* p = (page*)root;
+    // get the page
+    while(p->hdr.leftmost_ptr != NULL) {
+        p = (page *)p->linear_search(key);
+    }
+
+    assert(p->hdr.leftmost_ptr == nullptr);
+
+    if (_key < PtrKey(p->records[0].key)) {
+        //printf("return %s\n", PtrKey(p->records[0].key).ptr());
+        return (list_node_t*)p->records[0].ptr;
+    }
+    for(int i=1; p->records[i].ptr != NULL; ++i) {
+        PtrKey _k = PtrKey(p->records[i].key);
+        PtrKey _k1 = PtrKey(p->records[i - 1].key);
+        //printf("scan traverse %s\n", _k.ptr());
+        if (_key < _k){
+            return (list_node_t*)p->records[i].ptr;
+        }
+    }
+    //register int i;
+    //assert(f);
+    /*list_node_t *n = (list_node_t *)ptr;
     for (i = 0; i < num && n != nullptr; i++) {
         buf[i] = n->ptr;
         // printf("access %d-th element in scan from %lu\n", i, key);
         n = n->next;
-    }
+    }*/
+    return nullptr;
 }
 
 void btree::printAll(){
@@ -322,4 +341,5 @@ void btree::printAll(){
 
     printf("total number of keys: %d\n", total_keys);
     pthread_mutex_unlock(&print_mtx);
+}
 }
