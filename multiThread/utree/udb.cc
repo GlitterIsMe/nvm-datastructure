@@ -9,10 +9,12 @@
 
 namespace utree {
 
+
+
     const int LEN_SIZE = 8;
 
     bool ShouldStop(const std::string& first_str, const std::string& str){
-        printf("prefix[%s], str[%s]\n", first_str.c_str(), str.substr(0, str.find('-')).c_str());
+        //printf("prefix[%s], str[%s]\n", first_str.c_str(), str.substr(0, str.find('-')).c_str());
         return first_str == str.substr(0, str.find('-'));
     }
 
@@ -78,7 +80,7 @@ namespace utree {
         return true;
     }
 
-    bool uDB::Scan(const std::string &key, std::vector<std::string> &values) {
+    bool uDB::Scan(const std::string &key, std::vector<KVPair> &values) {
         std::string value;
         std::string lookup_prefix = key.substr(0, key.find('-'));
         uint64_t prefix_size = lookup_prefix.size();
@@ -94,21 +96,47 @@ namespace utree {
         tkey = std::string((char*)node->key + LEN_SIZE, key_size);
         uint64_t value_size = DecodeSize((char*)node->ptr);
         tvalue = std::string((char*)node->ptr + LEN_SIZE, value_size);
-        printf("scan start at [%s]\n", tkey.c_str());
+        //printf("scan start at [%s]\n", tkey.c_str());
 
         std::string prefix = tkey.substr(0, tkey.find('-'));
         if (node!= nullptr) {
             for (; ShouldStop(prefix, tkey) && n != nullptr; n = n->next) {
-                values.push_back(std::move(tkey + tvalue));
-
+                values.push_back(std::move(KVPair(tkey,tvalue)));
                 key_size = DecodeSize((char*)n->key);
                 value_size = DecodeSize((char*)n->ptr);
                 tkey = std::move(std::string((char*)n->key + LEN_SIZE, key_size));
                 tvalue = std::move(std::string((char*)n->ptr + LEN_SIZE, value_size));
+                //printf("scan get key [%s]\n", tkey.c_str());
+            }
+            return true;
+        }
+        return false;
+    }
 
-                printf("scan get key [%s]\n", tkey.c_str());
+    bool uDB::Scan(const std::string &key, int range, std::vector<KVPair> &values) {
+        uint64_t lookup_key_size = key.size();
+        char* lookup = new char[lookup_key_size + LEN_SIZE];
+        memcpy(lookup, (char*)(&lookup_key_size), LEN_SIZE);
+        memcpy(lookup + LEN_SIZE, key.data(), lookup_key_size);
+        entry_key_t lookup_key = (entry_key_t)(lookup);
 
+        list_node_t* node = utree_->scan(lookup_key);
+        list_node_t* n = node;
+        std::string tkey, tvalue;
+        uint64_t key_size = DecodeSize((char*)node->key);
+        tkey = std::string((char*)node->key + LEN_SIZE, key_size);
+        uint64_t value_size = DecodeSize((char*)node->ptr);
+        tvalue = std::string((char*)node->ptr + LEN_SIZE, value_size);
+        //printf("scan start at [%s]\n", tkey.c_str());
 
+        if (node!= nullptr) {
+            for (int i = 0; i < range && n != nullptr; n = n->next, i++) {
+                values.push_back(std::move(KVPair(tkey,tvalue)));
+                key_size = DecodeSize((char*)n->key);
+                value_size = DecodeSize((char*)n->ptr);
+                tkey = std::move(std::string((char*)n->key + LEN_SIZE, key_size));
+                tvalue = std::move(std::string((char*)n->ptr + LEN_SIZE, value_size));
+                //printf("scan get key [%s]\n", tkey.c_str());
             }
             return true;
         }

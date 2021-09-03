@@ -10,6 +10,8 @@
 
 namespace utree {
 
+    using KVPair = std::pair<std::string, std::string>;
+
     class btree;
     class log;
 
@@ -21,7 +23,10 @@ namespace utree {
         bool Put(const std::string& key, const std::string& value);
         bool Get(const std::string& key, std::string* value);
         bool Delete(const std::string& key);
-        bool Scan(const std::string& key, std::vector<std::string>& values);
+        // prefix scan
+        bool Scan(const std::string& key, std::vector<KVPair>& values);
+        // normal scan
+        bool Scan(const std::string& key, int range, std::vector<KVPair>& values);
 
     private:
         btree* utree_;

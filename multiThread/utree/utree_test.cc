@@ -19,10 +19,8 @@ std::string GenerateRandomKey(uint64_t sequence){
     zeros = std::max(0, zeros);
 
     std::string raw = std::string("user").append(zeros, '0').append(key_num_str);
-    uint64_t size = raw.size();
-    std::string raw_size((char*)(&size), sizeof(uint64_t));
-    //return std::string("user").append(zeros, '0').append(key_num_str);
-    return raw_size + raw;
+
+    return raw;
 }
 
 int main() {
@@ -53,15 +51,30 @@ int main() {
     }
     printf("found [%d], not found [%d]\n", search_found, search_miss);
 
-    //scan
-    std::string raw_key = GenerateRandomKey(10);
-    std::string prefix(std::to_string(10 % 20) + "-");
-    std::cout << prefix << std::endl;
-    std::vector<std::string> res;
-    db->Scan(prefix + raw_key, res);
-    int count = 0;
-    for (auto item : res) {
-        printf("%d.found [%s]\n",count++, item.c_str());
+    //preix scan
+    {
+        std::string raw_key = GenerateRandomKey(10);
+        std::string prefix(std::to_string(10 % 20) + "-");
+        std::cout << prefix << std::endl;
+        std::vector<KVPair> res;
+        db->Scan(prefix + raw_key, res);
+        int count = 0;
+        for (auto item : res) {
+            printf("%d.found [%s-%s]\n",count++, item.first.c_str(), item.second.c_str());
+        }
     }
+
+    // normal scan
+    {
+        std::string raw_key = GenerateRandomKey(10);
+        std::string prefix(std::to_string(10) + "-");
+        std::vector<KVPair> res;
+        db->Scan(prefix + raw_key, 10, res);
+        int count = 0;
+        for (auto item : res) {
+            printf("%d.found [%s-%s]\n",count++, item.first.c_str(), item.second.c_str());
+        }
+    }
+
 }
 
