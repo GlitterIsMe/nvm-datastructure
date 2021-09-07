@@ -3,9 +3,19 @@
 #include <string>
 #include <iostream>
 
-#include "udb.h"
+#include "tree_db.h"
 
+#ifdef UTREE
+#include "utree/utree.h"
 using namespace utree;
+#endif
+
+#ifdef FASTFAIR
+#include "fast_fair/btree.h"
+using namespace fastfair;
+#endif
+
+using namespace treedb;
 
 size_t standard(const void* _ptr, size_t _len,
                        size_t _seed=static_cast<size_t>(0xc70f6907UL)){
@@ -24,7 +34,7 @@ std::string GenerateRandomKey(uint64_t sequence){
 }
 
 int main() {
-    uDB* db = new uDB("./pmem", 1024UL * 1024UL * 1024UL);
+    TreeDB* db = new TreeDB("/mnt/pmem/log_pool", 1024UL * 1024UL * 1024UL);
     int num_entries = 1000;
 
     // insert

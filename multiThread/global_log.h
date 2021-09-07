@@ -7,6 +7,8 @@
 
 #include "log.h"
 
-extern pm::LogStore* global_log_;
+namespace treedb{
+    extern LogStore* global_log_;
+}
 
 #endif //YCSB_UTREE_GLOBAL_LOG_H

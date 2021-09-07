@@ -1,8 +1,6 @@
 #ifndef YCSB_C_ZIPFIAN_GENERATOR_H_
 #define YCSB_C_ZIPFIAN_GENERATOR_H_
 
-#include "assert.h"
-
 class ZipfianGenerator {
 public:
     constexpr static const double kZipfianConst = 0.99;
@@ -91,5 +89,32 @@ inline uint64_t ZipfianGenerator::Next(uint64_t num) {
 
     return last_value_ = base_ + num * std::pow(eta_ * u - eta_ + 1, alpha_);
 }
+
+class ScrambledZipfianGenerator {
+ public:
+  ScrambledZipfianGenerator(uint64_t min, uint64_t max,
+      double zipfian_const = ZipfianGenerator::kZipfianConst) :
+      base_(min), num_items_(max - min + 1),
+      generator_(min, max, zipfian_const) { }
+  
+  ScrambledZipfianGenerator(uint64_t num_items) :
+      ScrambledZipfianGenerator(0, num_items - 1) { }
+  
+  uint64_t Next();
+  uint64_t Last() { return last_; }
+  
+ private:
+  uint64_t base_;
+  uint64_t num_items_;
+  ZipfianGenerator generator_;
+  uint64_t last_;
+};
+
+inline uint64_t ScrambledZipfianGenerator::Next() {
+  uint64_t value = generator_.Next();
+  value = base_ + utils::FNVHash64(value) % num_items_;
+  return last_ = value;
+}
+
 
 #endif

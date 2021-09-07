@@ -11,22 +11,52 @@ if (USE_PMDK)
     add_definitions(-DUSE_PMDK)
 endif ()
 
+OPTION(UTREE_BASED "use utree as index" OFF)
+OPTION(FASTFAIR_BASED "use fast fait as index" ON)
+
 add_library(utree "")
 target_sources(utree PUBLIC
         "multiThread/utree/utree.h"
         "multiThread/utree/utree.cc"
-        "multiThread/utree/raw_key.h"
-        "multiThread/utree/log.h"
-        "multiThread/utree/global_log.cc"
-        "multiThread/utree/global_log.h"
-        "multiThread/utree/udb.cc"
-        "multiThread/utree/udb.h"
         )
-target_include_directories(utree PUBLIC multiThread/utree ${LIBPMEM_INCLUDE_DIRS} ${LIBPMEMOBJ_INCLUDE_DIRS})
+target_include_directories(utree PUBLIC multiThread/utree ${LIBPMEM_INCLUDE_DIRS} ${LIBPMEMOBJ_INCLUDE_DIRS} multiThread)
 target_link_libraries(utree ${LIBPMEM_LIBRARIES} ${LIBPMEMOBJ_LIBRARIES})
 
+add_library(fastfair "")
+target_sources(fastfair PUBLIC
+        "multiThread/fast_fair/btree.h"
+        "multiThread/fast_fair/btree.cc"
+        )
+target_include_directories(fastfair INTERFACE multiThread/fast_fair ${LIBPMEM_INCLUDE_DIRS} ${LIBPMEMOBJ_INCLUDE_DIRS} multiThread)
+target_link_libraries(fastfair ${LIBPMEM_LIBRARIES} ${LIBPMEMOBJ_LIBRARIES})
+
+add_library(treedb "")
+target_sources(treedb PUBLIC
+        "multiThread/global_log.cc"
+        "multiThread/tree_db.cc"
+        )
+target_include_directories(treedb PUBLIC multiThread ${LIBPMEM_INCLUDE_DIRS} ${LIBPMEMOBJ_INCLUDE_DIRS})
+target_link_libraries(treedb ${LIBPMEM_LIBRARIES} ${LIBPMEMOBJ_LIBRARIES})
+
+if (UTREE_BASED)
+    message("Link utree")
+    add_definitions(-DUTREE)
+    target_link_libraries(treedb utree)
+endif ()
+if (FASTFAIR_BASED)
+    message("Link fast-fair")
+    add_definitions(-DFASTFAIR)
+    target_link_libraries(treedb fastfair)
+endif ()
+
+
 add_executable(utree_test
-        "multiThread/utree/utree_test.cc"
+        "multiThread/utree_test.cc"
         )
 target_include_directories(utree_test PUBLIC multiThread/utree ${LIBPMEM_INCLUDE_DIRS} ${LIBPMEMOBJ_INCLUDE_DIRS})
-target_link_libraries(utree_test utree ${LIBPMEM_LIBRARIES} ${LIBPMEMOBJ_LIBRARIES})
+if (UTREE_BASED)
+    target_link_libraries(utree_test treedb utree ${LIBPMEM_LIBRARIES} ${LIBPMEMOBJ_LIBRARIES})
+endif ()
+if (FASTFAIR_BASED)
+    target_link_libraries(utree_test treedb fastfair ${LIBPMEM_LIBRARIES} ${LIBPMEMOBJ_LIBRARIES})
+endif ()

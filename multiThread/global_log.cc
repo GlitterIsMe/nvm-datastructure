@@ -3,4 +3,7 @@
 //
 
 #include "global_log.h"
-pm::LogStore* global_log_;
+
+namespace treedb {
+    LogStore* global_log_;
+}

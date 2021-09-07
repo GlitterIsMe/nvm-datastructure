@@ -2,23 +2,23 @@
 // Created by zzyyyww on 2021/9/2.
 //
 
-#ifndef UTREE_UDB_H
-#define UTREE_UDB_H
+#ifndef TREE_UDB_H
+#define TREE_UDB_H
 
 #include <string>
 #include <vector>
 
-namespace utree {
+namespace treedb {
 
     using KVPair = std::pair<std::string, std::string>;
 
     class btree;
     class log;
 
-    class uDB {
+    class TreeDB {
     public:
-        uDB(std::string log_path, uint64_t log_size);
-        ~uDB();
+        TreeDB(std::string log_path, uint64_t log_size);
+        ~TreeDB();
 
         bool Put(const std::string& key, const std::string& value);
         bool Get(const std::string& key, std::string* value);
@@ -29,7 +29,6 @@ namespace utree {
         bool Scan(const std::string& key, int range, std::vector<KVPair>& values);
 
     private:
-        btree* utree_;
     };
 }
 

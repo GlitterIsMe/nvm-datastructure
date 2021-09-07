@@ -12,7 +12,7 @@
 #include <atomic>
 #include <cstring>
 
-namespace pm {
+namespace treedb {
 
     inline std::string GenerateRawEntry(std::string entry){
         uint64_t size = entry.size();
