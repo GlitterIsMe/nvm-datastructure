@@ -66,6 +66,10 @@ public:
         return valid_;
     };
 
+    char* raw() const {
+        return (char*)ptr_;
+    }
+
     PtrKey& operator=(const PtrKey& key) =default;
 
     bool operator==(const PtrKey& key) const {

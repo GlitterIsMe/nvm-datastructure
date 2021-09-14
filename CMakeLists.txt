@@ -5,38 +5,37 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(LIBPMEM REQUIRED libpmem)
 pkg_check_modules(LIBPMEMOBJ REQUIRED libpmemobj)
 
+include_directories(${LIBPMEM_INCLUDE_DIRS} ${LIBPMEMOBJ_INCLUDE_DIRS} multiThread)
+link_libraries(${LIBPMEM_LIBRARIES} ${LIBPMEMOBJ_LIBRARIES})
+
 option(USE_PMDK "use pmdk library" ON)
 option(BUILD_SHARED_LIBS "build shared libs" ON)
 if (USE_PMDK)
     add_definitions(-DUSE_PMDK)
 endif ()
 
-OPTION(UTREE_BASED "use utree as index" OFF)
-OPTION(FASTFAIR_BASED "use fast fait as index" ON)
+OPTION(UTREE_BASED "use utree as index" ON)
+OPTION(FASTFAIR_BASED "use fast fait as index" OFF)
 
 add_library(utree "")
 target_sources(utree PUBLIC
         "multiThread/utree/utree.h"
         "multiThread/utree/utree.cc"
         )
-target_include_directories(utree PUBLIC multiThread/utree ${LIBPMEM_INCLUDE_DIRS} ${LIBPMEMOBJ_INCLUDE_DIRS} multiThread)
-target_link_libraries(utree ${LIBPMEM_LIBRARIES} ${LIBPMEMOBJ_LIBRARIES})
+target_include_directories(utree PUBLIC multiThread/utree)
 
 add_library(fastfair "")
 target_sources(fastfair PUBLIC
         "multiThread/fast_fair/btree.h"
         "multiThread/fast_fair/btree.cc"
         )
-target_include_directories(fastfair INTERFACE multiThread/fast_fair ${LIBPMEM_INCLUDE_DIRS} ${LIBPMEMOBJ_INCLUDE_DIRS} multiThread)
-target_link_libraries(fastfair ${LIBPMEM_LIBRARIES} ${LIBPMEMOBJ_LIBRARIES})
+target_include_directories(fastfair INTERFACE multiThread/fast_fair)
 
 add_library(treedb "")
 target_sources(treedb PUBLIC
         "multiThread/global_log.cc"
         "multiThread/tree_db.cc"
         )
-target_include_directories(treedb PUBLIC multiThread ${LIBPMEM_INCLUDE_DIRS} ${LIBPMEMOBJ_INCLUDE_DIRS})
-target_link_libraries(treedb ${LIBPMEM_LIBRARIES} ${LIBPMEMOBJ_LIBRARIES})
 
 if (UTREE_BASED)
     message("Link utree")
@@ -53,7 +52,7 @@ endif ()
 add_executable(utree_test
         "multiThread/utree_test.cc"
         )
-target_include_directories(utree_test PUBLIC multiThread/utree ${LIBPMEM_INCLUDE_DIRS} ${LIBPMEMOBJ_INCLUDE_DIRS})
+target_include_directories(utree_test PUBLIC multiThread/utree)
 if (UTREE_BASED)
     target_link_libraries(utree_test treedb utree ${LIBPMEM_LIBRARIES} ${LIBPMEMOBJ_LIBRARIES})
 endif ()

@@ -145,7 +145,10 @@ void btree::btree_insert_pred(entry_key_t key, char* right, char **pred, bool *u
 }
 
 void btree::insert(entry_key_t key, char *right) {
-    PtrKey _key(key);
+    PtrKey nvm_key(key);
+    char* dram_key = new char[nvm_key.size() + sizeof(uint64_t)];
+    memcpy(dram_key, nvm_key.raw(), nvm_key.size() + sizeof(uint64_t));
+    PtrKey _key(dram_key);
     list_node_t *n = (list_node_t *)alloc(sizeof(list_node_t));
     //printf("n=%p\n", n);
     n->next = NULL;

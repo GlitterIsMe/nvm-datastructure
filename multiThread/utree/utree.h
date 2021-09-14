@@ -244,6 +244,7 @@ namespace utree {
             hdr.mtx->lock();
 
             bool ret = remove_key(key);
+            delete[] (char*)key;
 
             hdr.mtx->unlock();
 
