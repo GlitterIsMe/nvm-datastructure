@@ -39,7 +39,7 @@ int file_exists(const char *filename) {
 
     void openPmemobjPool() {
         printf("use pmdk!\n");
-        char pathname[100] = "/mnt/pmem/utree";
+        char pathname[100] = "/mnt/pmem/utree/pool";
         int sds_write_value = 0;
         pmemobj_ctl_set(NULL, "sds.at_create", &sds_write_value);
         if (file_exists(pathname) != 0) {
