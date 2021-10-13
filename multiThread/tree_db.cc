@@ -20,7 +20,7 @@ namespace treedb {
 
     bool ShouldStop(const std::string& first_str, const std::string& str){
         //printf("prefix[%s], str[%s]\n", first_str.c_str(), str.substr(0, str.find('-')).c_str());
-        return first_str == str.substr(0, str.find('-'));
+        return first_str == str.substr(0, 8);
     }
 
     uint64_t DecodeSize(const char* raw) {
@@ -110,13 +110,12 @@ namespace treedb {
         utree::entry_key_t lookup_key = (utree::entry_key_t)(lookup);
         tree_->remove(lookup_key);
 #endif
-
         return true;
     }
 
     bool TreeDB::Scan(const std::string &key, std::vector<KVPair> &values) {
         std::string value;
-        std::string lookup_prefix = key.substr(0, key.find('-'));
+        std::string lookup_prefix = key.substr(0, 8);
         uint64_t prefix_size = lookup_prefix.size();
         char* lookup = new char[prefix_size + LEN_SIZE];
         memcpy(lookup, (char*)(&prefix_size), LEN_SIZE);
@@ -125,26 +124,30 @@ namespace treedb {
 #ifdef UTREE
         utree::entry_key_t lookup_key = (utree::entry_key_t)(lookup);
         utree::list_node_t* node = tree_->scan(lookup_key);
-        utree::list_node_t* n = node;
-        std::string tkey, tvalue;
-        uint64_t key_size = DecodeSize((char*)node->key);
-        tkey = std::string((char*)node->key + LEN_SIZE, key_size);
-        uint64_t value_size = DecodeSize((char*)node->ptr);
-        tvalue = std::string((char*)node->ptr + LEN_SIZE, value_size);
         //printf("scan start at [%s]\n", tkey.c_str());
-
-        std::string prefix = tkey.substr(0, tkey.find('-'));
+        //std::string prefix = tkey.substr(0, 8);
         if (node!= nullptr) {
-            for (; ShouldStop(prefix, tkey) && n != nullptr; n = n->next) {
-                values.push_back(std::move(KVPair(tkey,tvalue)));
+            utree::list_node_t* n = node;
+            std::string tkey, tvalue;
+            uint64_t key_size, value_size;
+            key_size = DecodeSize((char*)node->key);
+            tkey = std::string((char*)node->key + LEN_SIZE, key_size);
+            value_size = DecodeSize((char*)node->ptr);
+            tvalue = std::string((char*)node->ptr + LEN_SIZE, value_size);
+
+            for (; ShouldStop(lookup_prefix, tkey) && n != nullptr; n = n->next) {
                 key_size = DecodeSize((char*)n->key);
                 value_size = DecodeSize((char*)n->ptr);
                 tkey = std::move(std::string((char*)n->key + LEN_SIZE, key_size));
                 tvalue = std::move(std::string((char*)n->ptr + LEN_SIZE, value_size));
+                values.push_back(std::move(KVPair(tkey,tvalue)));
+
                 //printf("scan get key [%s]\n", tkey.c_str());
             }
+            delete[] lookup;
             return true;
         }
+        delete[] lookup;
         return false;
 #endif
 #ifdef FASTFAIR
@@ -162,7 +165,10 @@ namespace treedb {
                 tvalue = std::move(std::string((char*)res[i] + key_size + LEN_SIZE * 2, value_size));
                 values.emplace_back(KVPair(tkey, tvalue));
             }
-        } else return false;
+        } else {
+            delete[] res;
+            return false;
+        }
 
         delete[] res;
         return true;
@@ -195,8 +201,10 @@ namespace treedb {
                 tvalue = std::move(std::string((char*)n->ptr + LEN_SIZE, value_size));
                 //printf("scan get key [%s]\n", tkey.c_str());
             }
+            delete[] lookup;
             return true;
         }
+        delete[] lookup;
         return false;
 #endif
 
@@ -219,6 +227,7 @@ namespace treedb {
             values.push_back(std::move(KVPair(tkey,tvalue)));
             //printf("scan get key [%s]\n", tkey.c_str());
         }
+        delete[] lookup;
 #endif
     }
 }

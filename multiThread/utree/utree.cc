@@ -247,6 +247,7 @@ void btree::remove(entry_key_t key) {
         if (!__sync_bool_compare_and_swap(&(prev->next), cur, cur->next))
             goto retry;
         clflush((char *)prev, sizeof(list_node_t));
+        //pmemobj_persist(pop, (char *)prev, sizeof(list_node_t));
         btree_delete(key);
     }
 
