@@ -866,7 +866,7 @@ namespace utree {
                     return ret;
                 }
 
-                if((t = (char *)hdr.sibling_ptr) && key >= ((page *)t)->records[0].key)
+                if((t = (char *)hdr.sibling_ptr) && _key >= PtrKey(((page *)t)->records[0].key))
                     return t;
 
                 return NULL;
