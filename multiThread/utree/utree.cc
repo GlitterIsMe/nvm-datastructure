@@ -308,7 +308,7 @@ list_node_t* btree::scan(entry_key_t key){
     }
     for(int i=1; p->records[i].ptr != NULL; ++i) {
         PtrKey _k = PtrKey(p->records[i].key);
-        PtrKey _k1 = PtrKey(p->records[i - 1].key);
+        // PtrKey _k1 = PtrKey(p->records[i - 1].key);
         //printf("scan traverse %s\n", _k.ptr());
         if (_key < _k){
             return (list_node_t*)p->records[i].ptr;
@@ -322,7 +322,8 @@ list_node_t* btree::scan(entry_key_t key){
         // printf("access %d-th element in scan from %lu\n", i, key);
         n = n->next;
     }*/
-    return nullptr;
+    page* t = p->hdr.sibling_ptr;
+    return (list_node_t *)(t->records[0].ptr);
 }
 
 void btree::printAll(){
