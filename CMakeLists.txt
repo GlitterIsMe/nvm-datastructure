@@ -39,7 +39,7 @@ target_sources(treedb PUBLIC
 
 if (UTREE_BASED)
     message("Link utree")
-    add_definitions(-DUTREE)
+    target_compile_definitions(treedb PUBLIC -DUTREE)
     target_link_libraries(treedb utree)
 endif ()
 if (FASTFAIR_BASED)
