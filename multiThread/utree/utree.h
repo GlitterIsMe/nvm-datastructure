@@ -317,7 +317,8 @@ namespace utree {
 
             PtrKey _key(key);
 
-            register int num_entries = count();
+            //register int num_entries = count();
+            int num_entries = count();
 
             for (int i = 0; i < num_entries; i++)
                 if (_key == PtrKey(records[i].key)) {
@@ -354,7 +355,8 @@ namespace utree {
                 // overflow
                 // create a new node
                 page* sibling = new page(hdr.level);
-                register int m = (int) ceil(num_entries/2);
+                //register int m = (int) ceil(num_entries/2);
+                int m = (int) ceil(num_entries/2);
                 entry_key_t split_key = records[m].key;
 
                 // migrate half of keys into the sibling
@@ -493,7 +495,8 @@ namespace utree {
 
             PtrKey _key(key);
 
-            register int num_entries = count();
+            //register int num_entries = count();
+            int num_entries = count();
 
             for (int i = 0; i < num_entries; i++)
                 if (_key == PtrKey(records[i].key)) {
@@ -530,7 +533,8 @@ namespace utree {
                 // overflow
                 // create a new node
                 page* sibling = new page(hdr.level);
-                register int m = (int) ceil(num_entries/2);
+                //register int m = (int) ceil(num_entries/2);
+                int m = (int) ceil(num_entries/2);
                 entry_key_t split_key = records[m].key;
 
                 // migrate half of keys into the sibling

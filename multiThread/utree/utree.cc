@@ -45,7 +45,7 @@ int file_exists(const char *filename) {
         if (file_exists(pathname) != 0) {
             printf("create new one.\n");
             if ((pop = pmemobj_create(pathname, POBJ_LAYOUT_NAME(btree),
-                                      (uint64_t)1024 * 1024 * 1024 * 40, 0666)) ==
+                                      (uint64_t)1024 * 1024 * 1024 * 32, 0666)) ==
                                       NULL) {
                 perror("failed to create pool.\n");
                 return;
@@ -223,8 +223,9 @@ void btree::insert(entry_key_t key, char *right) {
 
 void btree::remove(entry_key_t key) {
     bool f, debug=false;
-    list_node_t *cur = NULL, *prev = NULL;
     retry:
+    list_node_t *cur = NULL, *prev = NULL;
+    //retry:
     cur = (list_node_t *)btree_search_pred(key, &f, (char **)&prev, debug);
     if (!f) {
         //printf("not found.\n");
@@ -240,7 +241,7 @@ void btree::remove(entry_key_t key) {
             printf("current list node:\n");
             cur->printAll();
         }
-        exit(1);
+        //exit(1);
         goto retry;
     } else {
         // Delete it.
