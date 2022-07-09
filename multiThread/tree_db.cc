@@ -14,21 +14,25 @@
 #include "fast_fair/btree.h"
 #endif
 
+#include "../../latency_counter.h"
+
 namespace treedb {
 
     const int LEN_SIZE = 8;
 
     bool ShouldStop(const std::string& first_str, const std::string& str){
         //printf("prefix[%s], str[%s]\n", first_str.c_str(), str.substr(0, str.find('-')).c_str());
-        return first_str == str.substr(0, 8);
+        //return first_str == str.substr(0, 8);
+        return str.find(first_str) != std::string::npos;
     }
 
     uint64_t DecodeSize(const char* raw) {
         if (raw == nullptr) {
             return 0;
         }
-        uint64_t* size = (uint64_t*)(raw);
-        return *size;
+        uint64_t size;
+        memcpy(&size, raw, 8);
+        return size;
     }
 
 #ifdef FASTFAIR
@@ -58,6 +62,7 @@ namespace treedb {
         uint64_t key_size = key.size();
         uint64_t value_size = value.size();
         uint64_t total_size = key.size() + value.size() + LEN_SIZE * 2;
+        START
         PmAddr addr = global_log_->Alloc(total_size);
         char* raw = global_log_->raw() + addr;
         memcpy(raw, (char*)(&key_size), LEN_SIZE);
@@ -65,16 +70,20 @@ namespace treedb {
         memcpy(raw + LEN_SIZE + key_size, (char*)(&value_size), LEN_SIZE);
         memcpy(raw + LEN_SIZE * 2 + key_size, value.data(), value.size());
         pmem_persist((void*)raw, total_size);
+        LOG_END
 #ifdef FASTFAIR
         tree_->btree_insert((fastfair::entry_key_t)(raw), raw + LEN_SIZE + key_size);
 #endif
 #ifdef UTREE
+        START
         tree_->insert((utree::entry_key_t)(raw), raw + LEN_SIZE + key_size);
+        INDEX_END
 #endif
         return true;
     }
 
     bool TreeDB::Get(const std::string &key, std::string *value) {
+        START
         bool found = false;
         uint64_t key_size = key.size();
         char* lookup = new char[key.size() + LEN_SIZE];
@@ -88,16 +97,20 @@ namespace treedb {
         utree::entry_key_t lookup_key = (utree::entry_key_t)(lookup);
         auto ret = tree_->search(lookup_key);
 #endif
+        INDEX_END
         if (ret != nullptr) {
+            START
             uint64_t size = *(uint64_t*)(ret);
             *value = std::move(std::string((char*)ret + LEN_SIZE, size));
             found = true;
+            LOG_END
         }
         delete[] lookup;
         return found;
     }
 
     bool TreeDB::Delete(const std::string &key) {
+        START
         uint64_t key_size = key.size();
         char* lookup = new char[key.size() + LEN_SIZE];
         memcpy(lookup, (char*)(&key_size), LEN_SIZE);
@@ -110,10 +123,12 @@ namespace treedb {
         utree::entry_key_t lookup_key = (utree::entry_key_t)(lookup);
         tree_->remove(lookup_key);
 #endif
+        INDEX_END
         return true;
     }
 
     bool TreeDB::Scan(const std::string &key, std::vector<KVPair> &values) {
+        START
         std::string value;
         std::string lookup_prefix = key.substr(0, 8);
         uint64_t prefix_size = lookup_prefix.size();
@@ -126,6 +141,8 @@ namespace treedb {
         utree::list_node_t* node = tree_->scan(lookup_key);
         //printf("scan start at [%s]\n", tkey.c_str());
         //std::string prefix = tkey.substr(0, 8);
+        INDEX_END
+        START
         if (node!= nullptr) {
             utree::list_node_t* n = node;
             std::string tkey, tvalue;
@@ -140,14 +157,16 @@ namespace treedb {
                 value_size = DecodeSize((char*)n->ptr);
                 tkey = std::move(std::string((char*)n->key + LEN_SIZE, key_size));
                 tvalue = std::move(std::string((char*)n->ptr + LEN_SIZE, value_size));
-                values.push_back(std::move(KVPair(tkey,tvalue)));
+                values.emplace_back(tkey,tvalue);
 
                 //printf("scan get key [%s]\n", tkey.c_str());
             }
             delete[] lookup;
+            LOG_END
             return true;
         }
         delete[] lookup;
+        LOG_END
         return false;
 #endif
 #ifdef FASTFAIR
