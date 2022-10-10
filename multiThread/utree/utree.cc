@@ -6,6 +6,8 @@
 namespace utree {
     pthread_mutex_t print_mtx;
 
+    size_t page::total_allocated = 0;
+
 #ifdef USE_PMDK
     POBJ_LAYOUT_BEGIN(btree);
     POBJ_LAYOUT_TOID(btree, list_node_t);

@@ -56,6 +56,7 @@ namespace treedb {
     TreeDB::~TreeDB() {
         delete tree_;
         delete global_log_;
+        printf("total allocated %lu bytes, %lf MB\n", utree::page::total_allocated, utree::page::total_allocated / 1024.0 / 1024.0);
     }
 
     bool TreeDB::Put(const std::string &key, const std::string &value) {

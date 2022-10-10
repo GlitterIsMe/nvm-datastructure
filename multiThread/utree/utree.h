@@ -161,9 +161,9 @@ namespace utree {
     private:
         header hdr;  // header in persistent memory, 16 bytes
         entry records[cardinality]; // slots in persistent memory, 16 bytes * n
-
     public:
         friend class btree;
+        static size_t total_allocated;
 
         page(uint32_t level = 0) {
             hdr.level = level;
@@ -184,6 +184,7 @@ namespace utree {
         void *operator new(size_t size) {
             void *ret;
             posix_memalign(&ret,64,size);
+            total_allocated += size;
             return ret;
         }
 
