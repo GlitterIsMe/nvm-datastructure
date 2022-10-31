@@ -7,6 +7,7 @@ namespace utree {
     pthread_mutex_t print_mtx;
 
     size_t page::total_allocated = 0;
+    uint64_t total_pm_allocation = 0;
 
 #ifdef USE_PMDK
     POBJ_LAYOUT_BEGIN(btree);
@@ -18,6 +19,7 @@ namespace utree {
 #ifdef USE_PMDK
         TOID(list_node_t) p;
         POBJ_ZALLOC(pop, &p, list_node_t, size);
+        total_pm_allocation += size;
         return pmemobj_direct(p.oid);
 #else
         void *ret = curr_addr;

@@ -27,6 +27,9 @@ namespace utree {
 #define PAGESIZE 512
 #define CACHE_LINE_SIZE 64
 #define IS_FORWARD(c) (c % 2 == 0)
+    extern uint64_t total_pm_allocation;
+
+    inline void print_pm_allocation() {printf("Total allocated %.2f MB PM space\n", total_pm_allocation / 1024.0 / 1024.0);}
 
     using entry_key_t = int64_t;
 
